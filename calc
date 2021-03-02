@@ -1,0 +1,153 @@
+#!/bin/bash
+
+# calc
+# February 24, 2021
+# Melania Czobit
+# Simulate a simple calculator
+# Purpose: Write a unix shell program to simulate a simple calculator
+
+echo "                                                       "
+echo "Welcome! To use this calculator, enter your inputs at the prompt."
+echo "At the operand prompt, you can input any digit, MR, MC, C or X."
+echo "At the operator prompt, you can input +,-,*,/,MS,M+,MC,C or X."
+echo "                                                       "
+echo "C   | clear result, keep memory "
+echo "MS  | store result in memory "
+echo "M+  | adds result to memory "
+echo "MR  | memory recall "
+echo "MC  | clear the memory "
+echo "X   | turn off the calculator "
+echo "                                                        "
+echo "Let's get started"
+echo "                                                        "
+
+# Build calculator function
+
+M=0  # M is the memory, initialized at zero, not included in any function to ensure memory is not altered when clear function is called
+
+start_calc() {
+# this function will be called to start the calculator to get the first user input
+# will also be called after the clear function, allows memory to be saved, can input a new operand1
+# prompts user to enter operand1
+
+while echo -n 'Enter operand: '    # operand can be a number, MR, MC, C or X
+        read operand1
+        if [ $operand1 == 'X' ]         # exit unix when X is inputted
+        then
+                echo Goodbye.
+                exit
+        fi
+        if [ $operand1 == 'MR' ]         # recalls the value of M in memory
+        then
+                operand1=$M
+                echo "M ->" $M
+        fi
+
+        [[ $operand1 == 'C' || $operand1 == 'MC' ]]   # in the case that C or MC is entered, ask for new first input
+do
+        case $operand1 in
+                C) clear_screen;;    # call clear_screen function if C entered
+                MC) M=0          # assigns value of memory to 0
+                echo "0 -> M";;
+        esac
+done
+
+calculator    # calls calculator function to get the operator and operand2 input
+}
+
+clear_screen() {
+# this function is called when the user enters 'C' at any prompt (operand or operator)
+# to clear the result and keep the memory
+# results cleared is echoed and the start_calc function is called to ask the user to enter operand1
+echo results cleared
+start_calc
+}
+
+
+calculator() {
+# this function calculates the arithmetic equations
+# user will input operator and operand2 at the prompts
+# created to mimimize code duplication and complete required calculations
+
+        # ask user to input operator
+        while echo -n 'Enter operator: '   # operator can be +,-,*,/,MS,M+,MC,C or X
+                read operator
+                if [[ $operator == 'X' && $operator != "*" ]]  # exit unix with X input
+                then
+                        echo Goodbye.
+                        exit
+                fi
+
+                if [[ $operator == 'C' && $operator != "*" ]]
+                then
+                        clear_screen        # call clear_screen function to clear the screen while keeping the memory
+                fi
+
+                # memory storage functions, when inputted, script asks user to re-input operator
+
+                [[ $operator == 'MS' || $operator == 'M+' || $operator == 'MC' ]]
+
+        do
+                case $operator in           # case matches value with condition entered
+                MS) M=$operand1          # stores number in memory
+                echo $operand1 "-> M";;  # displays what M value is
+                M+) M_add=$(( $operand1 + $M ))   # adds value in memory to operand 1
+                echo $operand1 "+" $M  "=" $M_add "-> M"  # displays what M value is
+                M=$M_add ;;  # assigns new value to M
+                MC) M=0      # M becomes 0
+                    echo "0 -> M";;
+                 *) echo Not a valid operator ;;
+                esac
+        done
+
+        # asks user to input second operand, can be any digit, MR,MC,C or X
+        while echo -n 'Enter operand: '
+                read operand2
+                if [ $operand2 == 'X' ]   # exit unix
+                then
+                        echo Goodbye.
+                        exit
+                fi
+                if [ $operand2 == 'MR' ]   # recalls the value of M
+                then
+                        operand2=$M
+                        echo "M ->" $M  # lets user know what this value is
+                fi
+                if [ $operand2 == 'C' ]
+                then
+                        clear_screen    # calls clear_screen function, keeps memory
+                fi
+                [[ $operator == '/' && $operand2 == 0 || $operand2 == 'MC' ]]  # checks for division by zero, asks user to re-enter operand2 if true
+        do
+                case $operand2 in
+                0) echo Cannot divide by zero. Please re-enter divisor. ;;  # to avoid an error, cannot divide by zero
+                MC) M=0                # if operand2 is entered as MC, M becomes 0
+                    echo "0 -> M" ;;
+                *) Not a valid operand
+                esac
+        done
+
+        # case branch to perform the aritmetic equations and echo what operation was completed
+        case $operator in
+                "+") answer=$(( $operand1 + $operand2 ))    #addition
+                   echo $operand1 $operator $operand2 "=" $answer;;
+                "-") answer=$(( $operand1 - $operand2 ))    #subtraction
+                   echo $operand1 $operator $operand2 "=" $answer ;;
+                "*") answer=$(( $operand1 * $operand2 ))   #multiplication
+                    echo $operand1 "$operator" $operand2 "=" $answer ;;
+                "/") answer=$(( $operand1 / $operand2  )) #division
+                   echo $operand1 $operator $operand2 "=" $answer ;;
+                *) echo Sorry, $operator is not a valid operator. Please re-enter operator ;;  # not a valid operator
+        esac
+
+        while [ $answer ]   # recursion allows the answer to be used as the next operand
+        do
+                operand1=$answer   # uses previous result, assigns answer to operand1
+                calculator         # calls the calculator function, operand1 is given and prompts for operator
+        done
+
+}
+
+
+start_calc     # calls the start_calc function to get the first input from the user
+
